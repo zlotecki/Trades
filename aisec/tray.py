@@ -66,8 +66,21 @@ class Tray:
         items = [P.MenuItem("AI Security is watching your computer", None, enabled=False)]
         for label, fn in self.center.menu_entries():
             items.append(P.MenuItem(label, self._make_stop(fn)))
+        if self.center.recent:
+            items.append(P.MenuItem("Dismiss all warnings", self._dismiss))
         items.append(P.MenuItem("Quit", lambda icon, item: icon.stop()))
         return items
+
+    def _dismiss(self, icon, item):
+        self.center.recent.clear()
+        self._refresh()
+
+    def _refresh(self):
+        """Green when no warnings are open, red otherwise. Main thread only."""
+        ok = not self.center.recent
+        self.icon.icon = _icon_image((40, 160, 90) if ok else (200, 40, 40))
+        self.icon.title = "AI Security: watching" if ok else "AI Security: WARNING"
+        self.icon.update_menu()
 
     def _make_stop(self, fn):
         # pystray allows at most 2 positional args, so bind fn via a closure.
@@ -81,7 +94,7 @@ class Tray:
             self._mac_popup(self.center.last_result)
         else:
             self.icon.notify(self.center.last_result)
-        self.icon.update_menu()
+        self._refresh()
 
     @staticmethod
     def _on_main(fn) -> None:
@@ -103,9 +116,7 @@ class Tray:
         self.center.add(alert)
 
         def update():
-            self.icon.icon = _icon_image((200, 40, 40))
-            self.icon.title = "AI Security: WARNING"
-            self.icon.update_menu()
+            self._refresh()
             if sys.platform != "darwin":
                 self.icon.notify(alert.message, "⚠️ AI Security warning")
 
