@@ -14,6 +14,10 @@ DEFAULT_ALLOWLIST = {
 }
 
 
+def _fmt(sec: float) -> str:
+    return f"{int(sec // 60)} min" if sec >= 60 else f"{int(sec)} sec"
+
+
 @dataclass
 class Alert:
     pid: int
@@ -47,7 +51,7 @@ class CpuMonitor:
                 self._alerted.add(pid)
                 alerts.append(Alert(pid, name, cpu, held, (
                     f"'{name}' (PID {pid}) has been using {cpu:.0f}% CPU for "
-                    f"{int(held // 60)} min. Hidden crypto miners behave like this. "
+                    f"{_fmt(held)}. Hidden crypto miners behave like this. "
                     "If you don't recognise it, stop it.")))
         return alerts
 

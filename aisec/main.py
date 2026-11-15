@@ -5,6 +5,7 @@ import time
 import psutil
 
 from .cpu_monitor import CpuMonitor, stop_process
+from .file_watcher import FileWatcher
 
 
 def notify(alert) -> None:
@@ -23,12 +24,13 @@ def main() -> None:
     ap.add_argument("--interval", type=float, default=5.0)
     a = ap.parse_args()
     mon = CpuMonitor(a.threshold, a.sustain)
+    fw = FileWatcher()
     psutil.cpu_percent(None)
     mon.sample()  # prime per-process counters
-    print("AI Security watching CPU... (Ctrl+C to quit)")
+    print("AI Security watching CPU and sensitive files... (Ctrl+C to quit)")
     while True:
         time.sleep(a.interval)
-        for alert in mon.poll():
+        for alert in mon.poll() + fw.poll():
             notify(alert)
 
 
