@@ -36,3 +36,24 @@ def test_menu_actions_accepted_by_pystray():
     t.icon = type("I", (), {})()
     action = t._make_stop(lambda: None)
     pystray.MenuItem("x", action)  # raises ValueError if invalid
+
+
+def test_shield_returns_to_green_after_stop_and_dismiss():
+    class FakeIcon:
+        icon = None
+        title = ""
+        def update_menu(self): pass
+        def notify(self, *a): pass
+
+    t = Tray.__new__(Tray)
+    t.center = AlertCenter(stopper=lambda pid: True)
+    t.icon = FakeIcon()
+    t.center.add(A(pid=1, name="x", message="m"))
+    t._refresh()
+    assert t.icon.title.endswith("WARNING")
+    t._stop(t.center.menu_entries()[0][1])
+    assert t.icon.title.endswith("watching")
+    t.center.add(A(pid=2, name="y", message="m"))
+    t._refresh()
+    t._dismiss(None, None)
+    assert t.icon.title.endswith("watching")
