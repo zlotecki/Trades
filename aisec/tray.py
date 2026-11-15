@@ -6,6 +6,7 @@ import sys
 import threading
 from collections import deque
 
+from . import autostart
 from .cpu_monitor import stop_process
 
 
@@ -68,8 +69,17 @@ class Tray:
             items.append(P.MenuItem(label, self._make_stop(fn)))
         if self.center.recent:
             items.append(P.MenuItem("Dismiss all warnings", self._dismiss))
+        items.append(P.MenuItem("Start at login", self._toggle_login,
+                                checked=lambda item: autostart.target().exists()))
         items.append(P.MenuItem("Quit", lambda icon, item: icon.stop()))
         return items
+
+    def _toggle_login(self, icon, item):
+        if autostart.target().exists():
+            autostart.uninstall()
+        else:
+            autostart.install()
+        self.icon.update_menu()
 
     def _dismiss(self, icon, item):
         self.center.recent.clear()
