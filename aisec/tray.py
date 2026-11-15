@@ -63,9 +63,15 @@ class Tray:
         P = self.pystray
         items = [P.MenuItem("AI Security is watching your computer", None, enabled=False)]
         for label, fn in self.center.menu_entries():
-            items.append(P.MenuItem(label, lambda icon, item, fn=fn: self._stop(fn)))
+            items.append(P.MenuItem(label, self._make_stop(fn)))
         items.append(P.MenuItem("Quit", lambda icon, item: icon.stop()))
         return items
+
+    def _make_stop(self, fn):
+        # pystray allows at most 2 positional args, so bind fn via a closure.
+        def action(icon, item):
+            self._stop(fn)
+        return action
 
     def _stop(self, fn):
         fn()

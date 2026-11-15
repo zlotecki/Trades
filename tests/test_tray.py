@@ -22,3 +22,17 @@ def test_failed_stop_keeps_alert():
 
 def test_no_display_falls_back():
     assert Tray.create(AlertCenter()) is None  # headless CI
+
+
+def test_menu_actions_accepted_by_pystray():
+    # Regression: pystray rejects callbacks with more than 2 positional args.
+    import pytest
+    try:
+        import pystray
+    except Exception:
+        pytest.skip("no display")
+    t = Tray.__new__(Tray)
+    t.pystray, t.center = pystray, AlertCenter()
+    t.icon = type("I", (), {})()
+    action = t._make_stop(lambda: None)
+    pystray.MenuItem("x", action)  # raises ValueError if invalid
