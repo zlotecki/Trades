@@ -11,3 +11,10 @@ connecting to unfamiliar servers.
     python -m pytest
 
 Mac: grant Full Disk Access to your terminal/Python for full visibility.
+
+## Build the Mac app
+
+    ./build_mac.sh
+    open "dist/AI Security.app"
+
+Then use the shield menu or run the app with `--install` to start at login.

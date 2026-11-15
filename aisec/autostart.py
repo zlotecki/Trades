@@ -6,7 +6,14 @@ import sys
 from pathlib import Path
 
 
+def frozen() -> bool:
+    """True when running as a packaged app (PyInstaller)."""
+    return bool(getattr(sys, "frozen", False))
+
+
 def command() -> list[str]:
+    if frozen():
+        return [sys.executable]
     exe = sys.executable
     if sys.platform == "win32":  # pythonw has no console window
         exe = exe.replace("python.exe", "pythonw.exe")
@@ -15,6 +22,8 @@ def command() -> list[str]:
 
 def project_dir() -> str:
     """Folder that contains the aisec package, so `-m aisec.main` is importable."""
+    if frozen():
+        return str(Path(sys.executable).parent)
     return str(Path(__file__).resolve().parent.parent)
 
 
