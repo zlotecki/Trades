@@ -1,6 +1,8 @@
 """System-tray icon + pop-up notifications. Falls back to the terminal if no GUI."""
 from __future__ import annotations
 
+import subprocess
+import sys
 import threading
 from collections import deque
 
@@ -75,15 +77,41 @@ class Tray:
 
     def _stop(self, fn):
         fn()
-        self.icon.notify(self.center.last_result)
+        if sys.platform == "darwin":
+            self._mac_popup(self.center.last_result)
+        else:
+            self.icon.notify(self.center.last_result)
         self.icon.update_menu()
 
+    @staticmethod
+    def _on_main(fn) -> None:
+        """macOS only allows menu-bar changes on the main thread."""
+        if sys.platform == "darwin":
+            from PyObjCTools import AppHelper
+            AppHelper.callAfter(fn)
+        else:
+            fn()
+
+    def _mac_popup(self, text: str) -> None:
+        esc = text.replace("\\", "\\\\").replace('"', '\\"')
+        subprocess.run(["osascript", "-e",
+                        f'display notification "{esc}" with title "AI Security warning" '
+                        'sound name "Basso"'], check=False, timeout=10)
+
     def notify(self, alert) -> None:
+        """Safe to call from any thread."""
         self.center.add(alert)
-        self.icon.icon = _icon_image((200, 40, 40))
-        self.icon.title = "AI Security: WARNING"
-        self.icon.notify(alert.message, "⚠️ AI Security warning")
-        self.icon.update_menu()
+
+        def update():
+            self.icon.icon = _icon_image((200, 40, 40))
+            self.icon.title = "AI Security: WARNING"
+            self.icon.update_menu()
+            if sys.platform != "darwin":
+                self.icon.notify(alert.message, "⚠️ AI Security warning")
+
+        self._on_main(update)
+        if sys.platform == "darwin":
+            self._mac_popup(alert.message)  # thread-safe, works on new macOS
 
     def run(self, worker) -> None:
         """Run the tray on the main thread, `worker(notify)` on a background thread."""
