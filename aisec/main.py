@@ -49,6 +49,8 @@ def main() -> None:
         print("AI Security running in the system tray.")
         tray.run(watch)
     else:
+        if not a.no_tray:
+            print(f"(No tray icon: {Tray.error or 'unknown reason'}. Using terminal alerts.)")
         print("AI Security watching CPU, files and connections... (Ctrl+C to quit)")
         try:
             watch(console_notify)

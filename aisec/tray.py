@@ -42,6 +42,7 @@ def _icon_image(color=(40, 160, 90)):
 
 
 class Tray:
+    error = ""
     """Wraps pystray. Use Tray.create() — returns None if no display is available."""
 
     def __init__(self, pystray, center: AlertCenter):
@@ -54,7 +55,8 @@ class Tray:
         try:
             import pystray
             return cls(pystray, center)
-        except Exception:  # no display / missing libs
+        except Exception as e:  # no display / missing libs
+            cls.error = f"{type(e).__name__}: {e}"
             return None
 
     def _items(self):
